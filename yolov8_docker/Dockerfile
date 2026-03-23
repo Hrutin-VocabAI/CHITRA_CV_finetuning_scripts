@@ -2,7 +2,7 @@
 # Why? It comes pre-configured with CUDA, PyTorch, OpenCV, and all dependencies required by YOLOv8.
 # This prevents 99% of "works on my machine" issues and saves you from dependency hell in Python/C++.
 # Specifically using the '-python' tag to get a pure Python environment without extra bloated CLI tools.
-FROM ultralytics/ultralytics:latest-python
+FROM ultralytics/ultralytics:latest
 
 # Set the working directory inside the container
 # This is where all the action will happen inside the Docker environment.

@@ -3,7 +3,7 @@ import torch
 from ultralytics import YOLO
 
 def str2bool(v):
-    return String(v).lower() in ("yes", "true", "t", "1")
+    return str(v).lower() in ("yes", "true", "t", "1")
 
 def main():
     print("=========================================")
