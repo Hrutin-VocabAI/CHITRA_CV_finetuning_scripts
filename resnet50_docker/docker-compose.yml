@@ -1,0 +1,55 @@
+version: '3.8'
+
+# 🚀 The BEAUTY of this setup:
+# We don't need to change `resnet_50_d2d_train.py` to use `os.getenv`!
+# We can use Docker Compose's `command` block to map `.env` variables 
+# directly to the Python script's `argparse` flags!
+
+services:
+  resnet50-trainer:
+    build: 
+      # We set the context to the parent folder `..` so Docker can see `resnet_50_d2d_train.py`
+      context: .. 
+      dockerfile: resnet50_docker/Dockerfile
+    
+    image: custom_resnet50_trainer:latest
+    container_name: resnet50_gpu_finetune
+    
+    # 🔌 Enable physical GPU for TensorFlow
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+    # 🔗 Read from .env
+    env_file:
+      - .env
+
+    # 📂 Local Volume Mapping
+    volumes:
+      # Mount dataset folder to `/app/data` inside the container
+      - ${HOST_SPLITS_DIR}:/app/data
+      
+      # Mount an output folder so the trained `.keras` model drops into your host machine!
+      - ./output_models:/app/output
+
+    # 🎯 The Magic Bridge:
+    # This automatically translates your `.env` variables into `--flags` for the script!
+    command: >
+      --splits_dir /app/data
+      --use_folder_split
+      --out_model /app/output/${MODEL_FILENAME:-resnet50_model.keras}
+      --seed ${SEED:-42}
+      --img_size ${IMG_SIZE:-224}
+      --batch_size ${BATCH_SIZE:-32}
+      --epochs_head ${EPOCHS_HEAD:-5}
+      --epochs_ft ${EPOCHS_FT:-10}
+      --lr_head ${LR_HEAD:-1e-3}
+      --lr_ft ${LR_FT:-1e-4}
+      --unfreeze_layers ${UNFREEZE_LAYERS:-30}
+
+    # No fast-restart loops on failure/completion
+    restart: "no"

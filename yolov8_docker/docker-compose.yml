@@ -1,0 +1,50 @@
+version: '3.8'
+
+# Why Docker Compose?
+# Instead of writing a massive bash command with 20 pieces like:
+# 'docker run -d --gpus all -v /local/path:/app/data -e EPOCHS=10 ...'
+# You can define everything in this YAML file and just run `docker compose up`.
+# This is an industry-standard best practice for orchestrating services.
+
+services:
+  yolov8-trainer:
+    # Build context points to the local directory where Dockerfile is.
+    # Alternatively, you could use `image: your_docker_hub_username/yolov8_trainer:latest`
+    build: .
+    image: custom_yolov8_trainer:latest
+    container_name: yolov8_gpu_finetune
+    
+    # 🔌 GPU Passthrough (CRITICAL)
+    # The 'deploy' block ensures Docker actually passes your physical GPU inside the virtual container.
+    # Without this, PyTorch will run on CPU and take weeks.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+    # 🔗 Environment Variables
+    # The container will read the file '.env' located in the same folder as this compose file
+    env_file:
+      - .env
+
+    # 📂 Local Volume Mapping (The secret sauce to local training)
+    # Volumes link a folder on your host machine to a folder inside the container.
+    # Format: `/your/host/path:/container/path`
+    volumes:
+      # 1. Mount your dataset:
+      # We inject the host path defined in `.env` into `/app/data` inside the container.
+      # So when YOLO looks for `/app/data/data.yaml` inside Docker, it's actually looking at the host path.
+      - ${HOST_DATA_PATH:-./example_dataset}:/app/data
+      
+      # 2. Extract trained weights:
+      # YOLO saves runs to `/app/runs` inside the container.
+      # By mapping a local `./runs` folder, your trained `.pt` files show up on your host machine immediately!
+      # If you don't do this, they get permanently deleted when the container stops!
+      - ./runs:/app/runs
+
+    # Prevent the container from auto-restarting if it crashes or completes.
+    # Training is a one-off batch job, not a permanent web server.
+    restart: "no"
