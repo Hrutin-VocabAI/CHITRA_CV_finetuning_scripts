@@ -30,6 +30,11 @@ services:
     env_file:
       - .env
 
+<<<<<<< HEAD
+=======
+    # 💾 Fix for PyTorch "No space left on device" shared memory (shm) crash
+    # Docker isolates shared memory to 64MB by default. We need much more for DataLoader workers!
+>>>>>>> 5627fae ( local updates differ from server)
     shm_size: '8gb'
 
     # 📂 Local Volume Mapping (The secret sauce to local training)

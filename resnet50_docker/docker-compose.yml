@@ -28,6 +28,9 @@ services:
     env_file:
       - .env
 
+    # 💾 Fix for Deep Learning Shared Memory
+    shm_size: '8gb'
+
     # 📂 Local Volume Mapping
     volumes:
       # Mount dataset folder to `/app/data` inside the container
